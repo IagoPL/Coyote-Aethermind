@@ -4,12 +4,12 @@ from sentence_transformers import SentenceTransformer
 
 # Load model and index
 model = SentenceTransformer("all-MiniLM-L6-v2")
-index = faiss.read_index("data/embeddings/faiss.index")
+index = faiss.read_index("../data/embeddings/faiss.index")
 
-with open("data/embeddings/chunks.pkl", "rb") as f:
+with open("../data/embeddings/chunks.pkl", "rb") as f:
     chunks = pickle.load(f)
 
-def search_context(question: str, top_k: int = 3) -> list[str]:
+def search_context(question: str, top_k: int = 8) -> list[str]:
     """
     Searches for the most semantically similar rule chunks to the user's question.
 
