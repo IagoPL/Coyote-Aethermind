@@ -1,0 +1,50 @@
+# Python / FastAPI backend
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.env
+*.env
+
+# FastAPI logs
+*.log
+
+# FAISS index and model cache
+data/embeddings/faiss.index
+data/embeddings/chunks.pkl
+sentence-transformers/
+*.onnx
+
+# VSCode / IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# macOS / Linux / Windows
+.DS_Store
+Thumbs.db
+
+# Flutter frontend
+/frontend/build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache
+pubspec.lock
+.dart_tool/
+generated_plugin_registrant.dart
+
+# Docs / output
+/docs/site/
+docs/__pycache__/
+*.md~
+
+# Node / Web fallback
+node_modules/
+dist/
+build/
+.env.local
+.env.production
