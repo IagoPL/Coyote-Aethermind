@@ -6,7 +6,7 @@ __pycache__/
 *.pyd
 .Python
 .env
-*.env
+**.env
 
 # FastAPI logs
 *.log
