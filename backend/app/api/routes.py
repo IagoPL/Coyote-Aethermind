@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Query
-from app.services.semantic_search import search_context
-from app.services.generative_answer import generate_answer_openrouter
-from app.services.history import get_history, save_history
+from app.services.ia.semantic_search import search_context
+from app.services.ia.generative_answer import generate_answer_openrouter
+from app.services.db.history import get_history, save_history
 
 router = APIRouter()
 

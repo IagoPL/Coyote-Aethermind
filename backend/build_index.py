@@ -1,6 +1,6 @@
 import os
-from app.services.preprocess_rules import split_rules_into_chunks
-from app.services.embedding_index import build_faiss_index
+from backend.app.services.ia.preprocess_rules import split_rules_into_chunks
+from backend.app.services.ia.embedding_index import build_faiss_index
 
 def main():
     # Ruta del archivo de reglas
