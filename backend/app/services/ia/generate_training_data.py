@@ -10,22 +10,17 @@ Generates a training dataset for the Aethermind AI model.
 - Saves the dataset in .jsonl format (compatible with Huggingface).
 
 Usage:
-    python app/services/generate_training_data.py
+    python -m app.services.ia.generate_training_data
 
 Output:
-    data/training_data.jsonl
+    data/training_data/training_data.jsonl
 """
 
 import sqlite3
 import json
-import os
 import pickle
-
-# Definir las rutas
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-HISTORY_DB_PATH = os.path.join(BASE_DIR, "data", "history.db")
-CHUNKS_PATH = os.path.join(BASE_DIR, "data", "embeddings", "chunks.pkl")
-OUTPUT_PATH = os.path.join(BASE_DIR, "data", "training_data.jsonl")
+import os
+from app.config import HISTORY_DB_PATH, CHUNKS_PATH, TRAINING_DATA_PATH
 
 def load_chunks():
     """
@@ -34,6 +29,7 @@ def load_chunks():
     Returns:
         list[str]: List of text chunks.
     """
+    print(f"USANDO CHUNKS_PATH: {CHUNKS_PATH}")  # Para depuración
     with open(CHUNKS_PATH, "rb") as f:
         chunks = pickle.load(f)
     return chunks
@@ -45,7 +41,9 @@ def load_history():
     Returns:
         list[tuple]: List of (question, context_used_json, answer) tuples.
     """
+    print(f"USANDO HISTORY_DB_PATH: {HISTORY_DB_PATH}")  # Para depuración
     conn = sqlite3.connect(HISTORY_DB_PATH)
+    conn.execute('PRAGMA journal_mode=DELETE;')  # 🔥 Forzar modo consistente
     cursor = conn.cursor()
 
     cursor.execute('''
@@ -54,6 +52,7 @@ def load_history():
 
     rows = cursor.fetchall()
     conn.close()
+    print(f"🔎 Se encontraron {len(rows)} registros en la tabla history.")
     return rows
 
 def build_dataset(rows):
@@ -76,13 +75,16 @@ def build_dataset(rows):
         try:
             # Parsear el contexto que es un string JSON → lista
             context_list = json.loads(context_json)
-        except json.JSONDecodeError:
+            if not isinstance(context_list, list):
+                context_list = []
+        except Exception as e:
+            print(f"⚠️ Error al parsear context_used para pregunta '{question}': {e}")
             context_list = []
 
-        # Construir el ejemplo
+        # Construir el ejemplo (aunque el contexto esté vacío)
         entry = {
             "prompt": f"Pregunta: {question}\n\nContexto:\n" + "\n".join(context_list) + "\n\nRespuesta:",
-            "completion": f" {answer}"  # El espacio inicial es buena práctica en entrenamiento
+            "completion": f" {answer}"  # Espacio inicial recomendado
         }
 
         dataset.append(entry)
@@ -97,6 +99,9 @@ def save_dataset(dataset, output_path):
         dataset (list[dict]): List of examples.
         output_path (str): Path to the .jsonl output file.
     """
+    # Asegurarse que el directorio existe
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
     with open(output_path, "w", encoding="utf-8") as f:
         for entry in dataset:
             json.dump(entry, f, ensure_ascii=False)
@@ -120,9 +125,9 @@ def main():
     dataset = build_dataset(rows)
 
     print("💾 Guardando dataset en .jsonl...")
-    save_dataset(dataset, OUTPUT_PATH)
+    save_dataset(dataset, TRAINING_DATA_PATH)
 
-    print(f"✅ Dataset generado: {OUTPUT_PATH} ({len(dataset)} ejemplos)")
+    print(f"✅ Dataset generado: {TRAINING_DATA_PATH} ({len(dataset)} ejemplos)")
 
 if __name__ == "__main__":
     main()

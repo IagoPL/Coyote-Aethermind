@@ -1,31 +1,21 @@
 import sqlite3
 import json
 import os
+
 from datetime import datetime
-
-# Crear carpeta data si no existe
-os.makedirs(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'data'), exist_ok=True)
-
-# Ruta absoluta al archivo DB
-DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'data', 'history.db')
+from app.config import HISTORY_DB_PATH
 
 
 def init_db():
     """
     Initializes the SQLite database.
-
-    Creates the `history` table if it does not exist.
-
-    The table contains:
-    - id: Primary Key (autoincrement)
-    - timestamp: UTC timestamp of the entry
-    - question: User's question
-    - context_used: JSON-serialized list of context chunks used for the answer
-    - answer: The generated answer
-
-    This function is called automatically on module import.
     """
-    conn = sqlite3.connect(DB_PATH)
+    print(f"USANDO HISTORY_DB_PATH: {HISTORY_DB_PATH}")  # Para depuración
+
+    # Crear carpeta si no existe
+    os.makedirs(os.path.dirname(HISTORY_DB_PATH), exist_ok=True)
+
+    conn = sqlite3.connect(HISTORY_DB_PATH)
     cursor = conn.cursor()
 
     cursor.execute('''
@@ -40,6 +30,7 @@ def init_db():
 
     conn.commit()
     conn.close()
+    print("✅ Tabla 'history' creada o ya existente.")
 
 
 def save_history(question: str, context_used: list[str], answer: str):
@@ -53,7 +44,7 @@ def save_history(question: str, context_used: list[str], answer: str):
 
     The function inserts a new record into the `history` table with a UTC timestamp.
     """
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(HISTORY_DB_PATH)
     cursor = conn.cursor()
 
     timestamp = datetime.utcnow().isoformat()
@@ -67,7 +58,6 @@ def save_history(question: str, context_used: list[str], answer: str):
     conn.commit()
     conn.close()
 
-
 def get_history(limit: int = 10):
     """
     Retrieves the latest entries from the history database.
@@ -78,7 +68,7 @@ def get_history(limit: int = 10):
     Returns:
         list[tuple]: List of tuples, each containing (timestamp, question, answer).
     """
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(HISTORY_DB_PATH)
     cursor = conn.cursor()
 
     cursor.execute('''
@@ -92,6 +82,33 @@ def get_history(limit: int = 10):
 
     return rows
 
+def clear_history():
+    """
+    Clears all entries from the history table.
+    """
+    conn = sqlite3.connect(HISTORY_DB_PATH)
+    cursor = conn.cursor()
 
-# Initialize the database when the module is imported
-init_db()
+    cursor.execute('DELETE FROM history')
+
+    conn.commit()
+    conn.close()
+    print("🗑️ Historial limpiado.")
+
+def print_history(limit: int = 10):
+    """
+    Prints the latest entries from the history table.
+
+    Args:
+        limit (int): Number of records to print. Defaults to 10.
+    """
+    history = get_history(limit)
+    print(f"\nÚltimas {len(history)} entradas del historial:")
+    for entry in history:
+        timestamp, question, answer = entry
+        print(f"\n[{timestamp}]\nPregunta: {question}\nRespuesta: {answer}\n{'-'*40}")
+
+# Initializa la base de datos 
+if __name__ == "__main__":
+    init_db()
+    print_history(5)
